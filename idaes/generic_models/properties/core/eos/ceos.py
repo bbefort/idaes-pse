@@ -25,7 +25,8 @@ from pyomo.environ import (exp,
                            Param,
                            Reals,
                            sqrt,
-                           Var)
+                           Var,
+                           value)
 from pyomo.common.config import ConfigBlock, ConfigValue, In
 
 from idaes.core.util.exceptions import PropertyNotSupportedError
@@ -374,14 +375,23 @@ class Cubic(EoSBase):
         EoS_p = sqrt(EoS_u**2 - 4*EoS_w)
 
         # Derived from equation on pg. 120 in Properties of Gases and Liquids
-        return (((blk.temperature*dadT - am) *
-                 safe_log((2*Z + B*(EoS_u+EoS_p)) / (2*Z + B*(EoS_u-EoS_p)),
-                          eps=1e-6) +
-                 Cubic.gas_constant(blk)*blk.temperature*(Z-1)*bm*EoS_p) /
-                (bm*EoS_p) + sum(blk.mole_frac_phase_comp[p, j] *
-                                 get_method(blk, "enth_mol_ig_comp", j)(
-                                            blk, cobj(blk, j), blk.temperature)
-                                 for j in blk.components_in_phase(p)))
+        if pobj._cubic_type == CubicType.VDW:
+            #### This is probably wrong - need to figure out vdW enthalpy equation - Update, this may be correct
+            return ((Cubic.gas_constant(blk)*blk.temperature*(Z-1)) + sum(blk.mole_frac_phase_comp[p, j] *
+                                     get_method(blk, "enth_mol_ig_comp", j)(
+                                                blk, cobj(blk, j), blk.temperature)
+                                     for j in blk.components_in_phase(p)))
+            
+        else:
+        
+            return (((blk.temperature*dadT - am) *
+                     safe_log((2*Z + B*(EoS_u+EoS_p)) / (2*Z + B*(EoS_u-EoS_p)),
+                              eps=1e-6) +
+                     Cubic.gas_constant(blk)*blk.temperature*(Z-1)*bm*EoS_p) /
+                    (bm*EoS_p) + sum(blk.mole_frac_phase_comp[p, j] *
+                                     get_method(blk, "enth_mol_ig_comp", j)(
+                                                blk, cobj(blk, j), blk.temperature)
+                                     for j in blk.components_in_phase(p)))
 
     @staticmethod
     def enth_mol_phase_comp(blk, p, j):
@@ -762,11 +772,21 @@ def _log_fug_coeff_method(A, b, bm, B, delta, Z, cubic_type):
     u = EoS_param[cubic_type]['u']
     w = EoS_param[cubic_type]['w']
     p = sqrt(u**2 - 4*w)
-
-    return ((b/bm*(Z-1)*(B*p) - safe_log(Z-B, eps=1e-6)*(B*p) +
-             A*(b/bm - delta)*safe_log((2*Z + B*(u + p))/(2*Z + B*(u - p)),
-                                       eps=1e-6)) /
-            (B*p))
+    
+    ctype = cubic_type
+    
+    if ctype == CubicType.VDW:
+        
+        #### Check this for vdW
+        
+        return ((b/bm*(Z-1) - safe_log(Z-B, eps=1e-6))) 
+    
+    else:
+    
+        return ((b/bm*(Z-1)*(B*p) - safe_log(Z-B, eps=1e-6)*(B*p) +
+                 A*(b/bm - delta)*safe_log((2*Z + B*(u + p))/(2*Z + B*(u - p)),
+                                           eps=1e-6)) /
+                (B*p))
 
 
 # -----------------------------------------------------------------------------
