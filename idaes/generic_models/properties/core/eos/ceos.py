@@ -778,11 +778,14 @@ def _log_fug_coeff_method(A, b, bm, B, delta, Z, cubic_type):
     if ctype == CubicType.VDW:
         
         #### Check this for vdW
-        
+        print('vdW is being used, _log_fug_coeff_method returns:',((b/bm*(Z-1) - safe_log(Z-B, eps=1e-6))))
         return ((b/bm*(Z-1) - safe_log(Z-B, eps=1e-6))) 
     
     else:
-    
+        print('other EOS is being used, _log_fug_coeff_method returns:',((b/bm*(Z-1)*(B*p) - safe_log(Z-B, eps=1e-6)*(B*p) +
+                 A*(b/bm - delta)*safe_log((2*Z + B*(u + p))/(2*Z + B*(u - p)),
+                                           eps=1e-6)) /
+                (B*p)))
         return ((b/bm*(Z-1)*(B*p) - safe_log(Z-B, eps=1e-6)*(B*p) +
                  A*(b/bm - delta)*safe_log((2*Z + B*(u + p))/(2*Z + B*(u - p)),
                                            eps=1e-6)) /
