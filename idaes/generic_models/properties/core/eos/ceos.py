@@ -377,13 +377,24 @@ class Cubic(EoSBase):
         # Derived from equation on pg. 120 in Properties of Gases and Liquids
         if pobj._cubic_type == CubicType.VDW:
             #### This is probably wrong - need to figure out vdW enthalpy equation - Update, this may be correct
+            print('Checking the vdW equation is being used, it is:',((Cubic.gas_constant(blk)*blk.temperature*(Z-1)) + sum(blk.mole_frac_phase_comp[p, j] *
+                                     get_method(blk, "enth_mol_ig_comp", j)(
+                                                blk, cobj(blk, j), blk.temperature)
+                                     for j in blk.components_in_phase(p)))) 
             return ((Cubic.gas_constant(blk)*blk.temperature*(Z-1)) + sum(blk.mole_frac_phase_comp[p, j] *
                                      get_method(blk, "enth_mol_ig_comp", j)(
                                                 blk, cobj(blk, j), blk.temperature)
                                      for j in blk.components_in_phase(p)))
             
         else:
-        
+            print('Checking the non-vdW equation is being used, it is:',(((blk.temperature*dadT - am) *
+                     safe_log((2*Z + B*(EoS_u+EoS_p)) / (2*Z + B*(EoS_u-EoS_p)),
+                              eps=1e-6) +
+                     Cubic.gas_constant(blk)*blk.temperature*(Z-1)*bm*EoS_p) /
+                    (bm*EoS_p) + sum(blk.mole_frac_phase_comp[p, j] *
+                                     get_method(blk, "enth_mol_ig_comp", j)(
+                                                blk, cobj(blk, j), blk.temperature)
+                                     for j in blk.components_in_phase(p))))
             return (((blk.temperature*dadT - am) *
                      safe_log((2*Z + B*(EoS_u+EoS_p)) / (2*Z + B*(EoS_u-EoS_p)),
                               eps=1e-6) +
