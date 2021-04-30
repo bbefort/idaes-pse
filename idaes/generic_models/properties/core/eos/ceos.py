@@ -792,10 +792,19 @@ def _log_fug_coeff_method(A, b, bm, B, delta, Z, cubic_type):
         
         #### Check this for vdW - 4/27/21 @10:18am: BB checked and thinks this equation should work for vdW and the correct equation is being called
 #         print('vdW is being used, _log_fug_coeff_method returns:',((b/bm*(Z-1) - safe_log(Z-B, eps=1e-6))))
+#         print('safe_log(Z-B, eps=1e-6))=',value(safe_log(Z-B, eps=1e-6)))
+#         print('b/bm=',value(b/bm))
+#         print('Z-1=',value(Z-1))
+#         print('VDW total:',value(b/bm*(Z-1) - safe_log(Z-B, eps=1e-6)))
         return ((b/bm*(Z-1) - safe_log(Z-B, eps=1e-6))) 
+#         return ((b/bm*(Z-1) - log(Z-B))) 
     
     else:
 #         print('other EOS is being used, _log_fug_coeff_method returns:',((b/bm*(Z-1)*(B*p) - safe_log(Z-B, eps=1e-6)*(B*p) +
+#                  A*(b/bm - delta)*safe_log((2*Z + B*(u + p))/(2*Z + B*(u - p)),
+#                                            eps=1e-6)) /
+#                 (B*p)))
+#         print('PR total:',value((b/bm*(Z-1)*(B*p) - safe_log(Z-B, eps=1e-6)*(B*p) +
 #                  A*(b/bm - delta)*safe_log((2*Z + B*(u + p))/(2*Z + B*(u - p)),
 #                                            eps=1e-6)) /
 #                 (B*p)))
