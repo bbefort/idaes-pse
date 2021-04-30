@@ -71,7 +71,9 @@ class MixingRuleB(Enum):
 EoS_param = {
         CubicType.PR: {'u': 2, 'w': -1, 'omegaA': 0.45724, 'coeff_b': 0.07780},
         CubicType.SRK: {'u': 1, 'w': 0, 'omegaA': 0.42748, 'coeff_b': 0.08664},
-        CubicType.VDW: {'u': 0, 'w': 0, 'omegaA': 0.42188, 'coeff_b': 0.12500} #why is it called omegaA, not coeff_a?
+#         CubicType.VDW: {'u': 0, 'w': 0, 'omegaA': 0.42188, 'coeff_b': 0.12500} #why is it called omegaA, not coeff_a?
+        CubicType.VDW: {'u': 0, 'w': 0, 'omegaA': 27/64, 'coeff_b': 1/8} #why is it called omegaA, not coeff_a?
+#         CubicType.VDW: {'u': 0, 'w': 0, 'omegaA': 0.45724, 'coeff_b': 0.07780}
         #Vdw EOS: a_coeff = 27/64, b_coeff = 1/8
         }
 
@@ -795,6 +797,9 @@ def _log_fug_coeff_method(A, b, bm, B, delta, Z, cubic_type):
 #         print('safe_log(Z-B, eps=1e-6))=',value(safe_log(Z-B, eps=1e-6)))
 #         print('b/bm=',value(b/bm))
 #         print('Z-1=',value(Z-1))
+        print('b=',value(b))
+        print('bm=',value(bm))
+#         print('B=',value(B))
 #         print('VDW total:',value(b/bm*(Z-1) - safe_log(Z-B, eps=1e-6)))
         return ((b/bm*(Z-1) - safe_log(Z-B, eps=1e-6))) 
 #         return ((b/bm*(Z-1) - log(Z-B))) 
@@ -808,6 +813,8 @@ def _log_fug_coeff_method(A, b, bm, B, delta, Z, cubic_type):
 #                  A*(b/bm - delta)*safe_log((2*Z + B*(u + p))/(2*Z + B*(u - p)),
 #                                            eps=1e-6)) /
 #                 (B*p)))
+        print('b=',value(b))
+        print('bm=',value(bm))
         return ((b/bm*(Z-1)*(B*p) - safe_log(Z-B, eps=1e-6)*(B*p) +
                  A*(b/bm - delta)*safe_log((2*Z + B*(u + p))/(2*Z + B*(u - p)),
                                            eps=1e-6)) /
