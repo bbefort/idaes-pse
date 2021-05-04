@@ -833,6 +833,11 @@ def rule_am_default(m, cname, a, p, pp=()):
         for i in m.components_in_phase(p))
 
 
-def rule_bm_default(m, b, p):
-    return sum(m.mole_frac_phase_comp[p, i]*b[i]
-               for i in m.components_in_phase(p))
+# def rule_bm_default(m, b, p):
+def rule_bm_default(m, b, p,pp=()):
+    #Jung 2001 MR
+    return sum(sum(m.mole_frac_phase_comp[p, i]*(b[pp, i]**(1/3)+b[pp, j]**(1/3))**3/8
+        for j in m.components_in_phase(p))
+        for i in m.components_in_phase(p))
+#     return sum(m.mole_frac_phase_comp[p, i]*b[i]
+#                for i in m.components_in_phase(p))
