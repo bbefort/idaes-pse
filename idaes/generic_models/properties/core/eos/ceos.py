@@ -802,6 +802,7 @@ def _log_fug_coeff_method(A, b, bm, B, delta, Z, cubic_type):
 #         print('B=',value(B))
 #         print('VDW total:',value(b/bm*(Z-1) - safe_log(Z-B, eps=1e-6)))
         return ((b/bm*(Z-1) - safe_log(Z-B, eps=1e-6))) 
+#         return ((b/bm*(Z-1) - safe_log(Z-B, eps=1e-6)) -  A*(delta)/B) 
 #         return ((b/bm*(Z-1) - log(Z-B))) 
     
     else:
