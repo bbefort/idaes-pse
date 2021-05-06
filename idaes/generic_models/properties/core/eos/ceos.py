@@ -203,10 +203,18 @@ class Cubic(EoSBase):
             a = getattr(m, cname+"_a")
             am = getattr(m, cname+"_am")
             kappa = getattr(m.params, cname+"_kappa")
-            return (2*sqrt(a[i])/am[p] *
-                    sum(m.mole_frac_phase_comp[p, j]*sqrt(a[j]) *
-                        (1-kappa[i, j])
-                        for j in b.components_in_phase(p)))
+    
+            if ctype == CubicType.VDW:
+
+                return (2*sqrt(a[i]) *
+                        sum(m.mole_frac_phase_comp[p, j]*sqrt(a[j]) *
+                            (1-kappa[i, j])
+                            for j in b.components_in_phase(p)))
+            else:
+                return (2*sqrt(a[i])/am[p] *
+                        sum(m.mole_frac_phase_comp[p, j]*sqrt(a[j]) *
+                            (1-kappa[i, j])
+                            for j in b.components_in_phase(p)))
         b.add_component(cname+"_delta",
                         Expression(b.phase_component_set,
                                    rule=rule_delta))
@@ -293,10 +301,18 @@ class Cubic(EoSBase):
                 a = getattr(m, "_"+cname+"_a_eq")
                 am = getattr(m, "_"+cname+"_am_eq")
                 kappa = getattr(m.params, cname+"_kappa")
-                return (2*sqrt(a[p1, p2, i])/am[p1, p2, p3] *
-                        sum(m.mole_frac_phase_comp[p3, j]*sqrt(a[p1, p2, j]) *
-                            (1-kappa[i, j])
-                            for j in m.components_in_phase(p3)))
+    
+                if ctype == CubicType.VDW:
+
+                    return (2*sqrt(a[p1, p2, i]) *
+                            sum(m.mole_frac_phase_comp[p3, j]*sqrt(a[p1, p2, j]) *
+                                (1-kappa[i, j])
+                                for j in m.components_in_phase(p3)))
+                else:
+                    return (2*sqrt(a[p1, p2, i])/am[p1, p2, p3] *
+                            sum(m.mole_frac_phase_comp[p3, j]*sqrt(a[p1, p2, j]) *
+                                (1-kappa[i, j])
+                                for j in m.components_in_phase(p3)))
             b.add_component("_"+cname+"_delta_eq",
                             Expression(b.params._pe_pairs,
                                        b.phase_component_set,
@@ -598,9 +614,14 @@ class Cubic(EoSBase):
                              blk.temperature_bubble[pp])**2
         B = bm*blk.pressure/(Cubic.gas_constant(blk) *
                              blk.temperature_bubble[pp])
+    
+        if ctype == CubicType.VDW:
 
-        delta = (2*sqrt(a(j))/am * sum(x[xidx, i]*sqrt(a(i))*(1-kappa[j, i])
-                                       for i in blk.params.component_list))
+            delta = (2*sqrt(a(j)) * sum(x[xidx, i]*sqrt(a(i))*(1-kappa[j, i])
+                                           for i in blk.params.component_list))
+        else: 
+            delta = (2*sqrt(a(j))/am * sum(x[xidx, i]*sqrt(a(i))*(1-kappa[j, i])
+                                           for i in blk.params.component_list))
 
         f = getattr(blk, "_"+cname+"_ext_func_param")
         if pobj.is_vapor_phase():
@@ -659,9 +680,16 @@ class Cubic(EoSBase):
                              blk.temperature_dew[pp])**2
         B = bm*blk.pressure/(Cubic.gas_constant(blk) *
                              blk.temperature_dew[pp])
+    
+        if ctype == CubicType.VDW:
 
-        delta = (2*sqrt(a(j))/am * sum(x[xidx, i]*sqrt(a(i))*(1-kappa[j, i])
-                                       for i in blk.params.component_list))
+            delta = (2*sqrt(a(j)) * sum(x[xidx, i]*sqrt(a(i))*(1-kappa[j, i])
+                                           for i in blk.params.component_list))
+        
+        else:
+        
+            delta = (2*sqrt(a(j))/am * sum(x[xidx, i]*sqrt(a(i))*(1-kappa[j, i])
+                                           for i in blk.params.component_list))
 
         f = getattr(blk, "_"+cname+"_ext_func_param")
         if pobj.is_vapor_phase():
@@ -713,9 +741,14 @@ class Cubic(EoSBase):
                                         blk.temperature)**2
         B = bm*blk.pressure_bubble[pp]/(Cubic.gas_constant(blk) *
                                         blk.temperature)
+    
+        if ctype == CubicType.VDW:
 
-        delta = (2*sqrt(a[j])/am * sum(x[xidx, i]*sqrt(a[i])*(1-kappa[j, i])
-                                       for i in blk.params.component_list))
+            delta = (2*sqrt(a(j)) * sum(x[xidx, i]*sqrt(a(i))*(1-kappa[j, i])
+                                           for i in blk.params.component_list))
+        else: 
+            delta = (2*sqrt(a[j])/am * sum(x[xidx, i]*sqrt(a[i])*(1-kappa[j, i])
+                                           for i in blk.params.component_list))
 
         f = getattr(blk, "_"+cname+"_ext_func_param")
         if pobj.is_vapor_phase():
@@ -766,9 +799,14 @@ class Cubic(EoSBase):
         A = am*blk.pressure_dew[pp]/(Cubic.gas_constant(blk) *
                                      blk.temperature)**2
         B = bm*blk.pressure_dew[pp]/(Cubic.gas_constant(blk)*blk.temperature)
+    
+        if ctype == CubicType.VDW:
 
-        delta = (2*sqrt(a[j])/am * sum(x[xidx, i]*sqrt(a[i])*(1-kappa[j, i])
-                                       for i in blk.params.component_list))
+            delta = (2*sqrt(a(j)) * sum(x[xidx, i]*sqrt(a(i))*(1-kappa[j, i])
+                                           for i in blk.params.component_list))
+        else: 
+            delta = (2*sqrt(a[j])/am * sum(x[xidx, i]*sqrt(a[i])*(1-kappa[j, i])
+                                           for i in blk.params.component_list))
 
         f = getattr(blk, "_"+cname+"_ext_func_param")
         if pobj.is_vapor_phase():
@@ -826,33 +864,19 @@ def _log_fug_coeff_method(A, b, bm, B, delta, Z, cubic_type):
     u = EoS_param[cubic_type]['u']
     w = EoS_param[cubic_type]['w']
     p = sqrt(u**2 - 4*w)
-    
-    ctype = cubic_type
-    
+       
+    ctype = cubic_type    
+        #### Check this for vdW - 4/27/21 @10:18am: BB checked and thinks this equation should work for vdW and the correct equation is being called
+
     if ctype == CubicType.VDW:
         
-        #### Check this for vdW - 4/27/21 @10:18am: BB checked and thinks this equation should work for vdW and the correct equation is being called
-#         print('vdW is being used, _log_fug_coeff_method returns:',((b/bm*(Z-1) - safe_log(Z-B, eps=1e-6))))
-#         print('safe_log(Z-B, eps=1e-6))=',value(safe_log(Z-B, eps=1e-6)))
-#         print('b/bm=',value(b/bm))
-#         print('Z-1=',value(Z-1))
         print('b=',value(b))
         print('bm=',value(bm))
-#         print('B=',value(B))
-#         print('VDW total:',value(b/bm*(Z-1) - safe_log(Z-B, eps=1e-6)))
-        return ((b/bm*(Z-1) - safe_log(Z-B, eps=1e-6))) 
-#         return ((b/bm*(Z-1) - safe_log(Z-B, eps=1e-6)) -  A*(delta)/B) 
-#         return ((b/bm*(Z-1) - log(Z-B))) 
+#         print('delta=',value(delta))
+        return (b/bm*B/(Z-B) - safe_log(Z-B, eps=1e-6) - delta/Z) 
+
     
     else:
-#         print('other EOS is being used, _log_fug_coeff_method returns:',((b/bm*(Z-1)*(B*p) - safe_log(Z-B, eps=1e-6)*(B*p) +
-#                  A*(b/bm - delta)*safe_log((2*Z + B*(u + p))/(2*Z + B*(u - p)),
-#                                            eps=1e-6)) /
-#                 (B*p)))
-#         print('PR total:',value((b/bm*(Z-1)*(B*p) - safe_log(Z-B, eps=1e-6)*(B*p) +
-#                  A*(b/bm - delta)*safe_log((2*Z + B*(u + p))/(2*Z + B*(u - p)),
-#                                            eps=1e-6)) /
-#                 (B*p)))
         print('b=',value(b))
         print('bm=',value(bm))
         return ((b/bm*(Z-1)*(B*p) - safe_log(Z-B, eps=1e-6)*(B*p) +
