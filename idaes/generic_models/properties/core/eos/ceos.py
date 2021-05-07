@@ -56,6 +56,7 @@ def cubic_roots_available():
 class CubicType(Enum):
     PR = 0
     SRK = 1
+    VDW = 2
 
 
 class MixingRuleA(Enum):
@@ -68,7 +69,8 @@ class MixingRuleB(Enum):
 
 EoS_param = {
         CubicType.PR: {'u': 2, 'w': -1, 'omegaA': 0.45724, 'coeff_b': 0.07780},
-        CubicType.SRK: {'u': 1, 'w': 0, 'omegaA': 0.42748, 'coeff_b': 0.08664}
+        CubicType.SRK: {'u': 1, 'w': 0, 'omegaA': 0.42748, 'coeff_b': 0.08664},
+        CubicType.VDW: {'u': 0, 'w': 0, 'omegaA': 27/64, 'coeff_b': 1/8}
         }
 
 
@@ -99,6 +101,8 @@ class Cubic(EoSBase):
             elif ctype == CubicType.SRK:
                 return 0.48 + 1.574*cobj.omega - \
                        0.176*cobj.omega**2
+            elif ctype == CubicType.VDW:
+                return 0.0
             else:
                 raise BurntToast(
                         "{} received unrecognized cubic type. This should "
