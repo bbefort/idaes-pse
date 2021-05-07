@@ -786,9 +786,10 @@ def _log_fug_coeff_method(P, R, T, A, b, bm, B, delta, Z, cubic_type):
     w = EoS_param[cubic_type]['w']
     p = sqrt(u**2 - 4*w)
     
-    if ctype == CubicType.VDW:
+    if cubic_type == CubicType.VDW:
         
         return (b*P/R/T)/(Z-B) - safe_log(Z-B, eps=1e-6) - 2*A/Z
+    
     else:
         return ((b/bm*(Z-1)*(B*p) - safe_log(Z-B, eps=1e-6)*(B*p) +
                  A*(b/bm - delta)*safe_log((2*Z + B*(u + p))/(2*Z + B*(u - p)),
