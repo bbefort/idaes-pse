@@ -511,8 +511,12 @@ class Cubic(EoSBase):
         B = getattr(blk, cname+"_B")[p]
         delta = getattr(blk, cname+"_delta")[p, j]
         Z = blk.compress_fact_phase[p]
+        
+        P = blk.pressure
+        R = Cubic.gas_constant(blk)
+        T = blk.temperature
 
-        return exp(_log_fug_coeff_method(A, b, bm, B, delta, Z, ctype))
+        return exp(_log_fug_coeff_method(P, R, T, A, b, bm, B, delta, Z, ctype))
 
     @staticmethod
     def fug_coeff_phase_comp_eq(blk, p, j, pp):
@@ -568,8 +572,12 @@ class Cubic(EoSBase):
             proc = getattr(blk, "_"+cname+"_proc_Z_liq")
 
         Z = proc(f, A, B)
+        
+        P = blk.pressure
+        R = Cubic.gas_constant(blk)
+        T = blk.temperature_bubble[pp]
 
-        return _log_fug_coeff_method(A, b[j], bm, B, delta, Z, ctype)
+        return _log_fug_coeff_method(P, R, T, A, b[j], bm, B, delta, Z, ctype)
 
     @staticmethod
     def log_fug_coeff_phase_comp_Tdew(blk, p, j, pp):
@@ -621,8 +629,12 @@ class Cubic(EoSBase):
             proc = getattr(blk, "_"+cname+"_proc_Z_liq")
 
         Z = proc(f, A, B)
+        
+        P = blk.pressure
+        R = Cubic.gas_constant(blk)
+        T = blk.temperature_dew[pp]
 
-        return _log_fug_coeff_method(A, b[j], bm, B, delta, Z, ctype)
+        return _log_fug_coeff_method(P, R, T, A, b[j], bm, B, delta, Z, ctype)
 
     @staticmethod
     def log_fug_coeff_phase_comp_Pbub(blk, p, j, pp):
@@ -667,8 +679,12 @@ class Cubic(EoSBase):
             proc = getattr(blk, "_"+cname+"_proc_Z_liq")
 
         Z = proc(f, A, B)
+        
+        P = blk.pressure_bubble[pp]
+        R = Cubic.gas_constant(blk)
+        T = blk.temperature
 
-        return _log_fug_coeff_method(A, b[j], bm, B, delta, Z, ctype)
+        return _log_fug_coeff_method(P, R, T, A, b[j], bm, B, delta, Z, ctype)
 
     @staticmethod
     def log_fug_coeff_phase_comp_Pdew(blk, p, j, pp):
@@ -712,8 +728,12 @@ class Cubic(EoSBase):
             proc = getattr(blk, "_"+cname+"_proc_Z_liq")
 
         Z = proc(f, A, B)
+        
+        P = blk.pressure_dew[pp]
+        R = Cubic.gas_constant(blk)
+        T = blk.temperature
 
-        return _log_fug_coeff_method(A, b[j], bm, B, delta, Z, ctype)
+        return _log_fug_coeff_method(P, R, T, A, b[j], bm, B, delta, Z, ctype)
 
     @staticmethod
     def gibbs_mol_phase(b, p):
@@ -752,20 +772,28 @@ def _log_fug_coeff_phase_comp_eq(blk, p, j, pp):
 
     def Zeq(p):
         return proc(f, Aeq[pp, p], Beq[pp, p])
+    
+    Peq = blk.pressure
+    R = Cubic.gas_constant(blk)
+    Teq = blk.temperature
 
-    return _log_fug_coeff_method(Aeq[pp, p], b[j], bm[p], Beq[pp, p],
+    return _log_fug_coeff_method(Peq, R, Teq, Aeq[pp, p], b[j], bm[p], Beq[pp, p],
                                  delta_eq[pp, p, j], Zeq(p), pobj._cubic_type)
 
 
-def _log_fug_coeff_method(A, b, bm, B, delta, Z, cubic_type):
+def _log_fug_coeff_method(P, R, T, A, b, bm, B, delta, Z, cubic_type):
     u = EoS_param[cubic_type]['u']
     w = EoS_param[cubic_type]['w']
     p = sqrt(u**2 - 4*w)
-
-    return ((b/bm*(Z-1)*(B*p) - safe_log(Z-B, eps=1e-6)*(B*p) +
-             A*(b/bm - delta)*safe_log((2*Z + B*(u + p))/(2*Z + B*(u - p)),
-                                       eps=1e-6)) /
-            (B*p))
+    
+    if ctype == CubicType.VDW:
+        
+        return (b*P/R/T)/(Z-B) - safe_log(Z-B, eps=1e-6) - 2*A/Z
+    else:
+        return ((b/bm*(Z-1)*(B*p) - safe_log(Z-B, eps=1e-6)*(B*p) +
+                 A*(b/bm - delta)*safe_log((2*Z + B*(u + p))/(2*Z + B*(u - p)),
+                                           eps=1e-6)) /
+                (B*p))
 
 
 # -----------------------------------------------------------------------------
