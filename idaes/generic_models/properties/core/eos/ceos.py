@@ -196,7 +196,7 @@ class Cubic(EoSBase):
             if ctype == CubicType.VDW:
                 
                 return (2*
-                    sum(sqrt(a[i]) * sqrt(a[j]) *
+                    sum(m.mole_frac_phase_comp[p, j]*sqrt(a[i]) * sqrt(a[j]) *
                         (1-kappa[i, j]) * m.pressure/(Cubic.gas_constant(b)*m.temperature)**2
                         for j in b.components_in_phase(p)))
             
@@ -296,8 +296,8 @@ class Cubic(EoSBase):
                 if ctype == CubicType.VDW:
                 
                     return (2*
-                        sum(sqrt(a[p1, p2, i]) * sqrt(a[p1, p2, j]) *
-                            (1-kappa[i, j]) * m.pressure/(Cubic.gas_constant(b)*m.temperature)**2
+                        sum(m.mole_frac_phase_comp[p3, j]*sqrt(a[p1, p2, i]) * sqrt(a[p1, p2, j]) *
+                            (1-kappa[i, j]) * m.pressure/(Cubic.gas_constant(b)*m._teq[p1, p2])**2
                             for j in b.components_in_phase(p3)))
             
                 else:
@@ -584,7 +584,7 @@ class Cubic(EoSBase):
         if ctype == CubicType.VDW:
                 
             delta =  (2*
-                sum(sqrt(a(i)) * sqrt(a(j)) *
+                sum(x[xidx, i]*sqrt(a(i)) * sqrt(a(j)) *
                     (1-kappa[i, j]) * blk.pressure/(Cubic.gas_constant(blk) *
                              blk.temperature_bubble[pp])**2
                     for i in blk.params.component_list))
@@ -649,7 +649,7 @@ class Cubic(EoSBase):
         if ctype == CubicType.VDW:
                 
             delta =  (2*
-                sum(sqrt(a(i)) * sqrt(a(j)) *
+                sum(x[xidx, i]*sqrt(a(i)) * sqrt(a(j)) *
                     (1-kappa[i, j]) * blk.pressure/(Cubic.gas_constant(blk) *
                              blk.temperature_dew[pp])**2
                     for i in blk.params.component_list))
@@ -706,7 +706,7 @@ class Cubic(EoSBase):
         if ctype == CubicType.VDW:
                 
             delta =  (2*
-                sum(sqrt(a[i]) * sqrt(a[j]) *
+                sum(x[xidx, i]*sqrt(a[i]) * sqrt(a[j]) *
                     (1-kappa[i, j]) * blk.pressure_bubble[pp]/(Cubic.gas_constant(blk) *
                                         blk.temperature)**2
                     for i in blk.params.component_list))
@@ -762,7 +762,7 @@ class Cubic(EoSBase):
         if ctype == CubicType.VDW:
                 
             delta =  (2*
-                sum(sqrt(a[i]) * sqrt(a[j]) *
+                sum(x[xidx, i]*sqrt(a[i]) * sqrt(a[j]) *
                     (1-kappa[i, j]) * blk.pressure_dew[pp]/(Cubic.gas_constant(blk) *
                                      blk.temperature)**2
                     for i in blk.params.component_list))
@@ -821,7 +821,7 @@ def _log_fug_coeff_phase_comp_eq(blk, p, j, pp):
     def Zeq(p):
         return proc(f, Aeq[pp, p], Beq[pp, p])
     
-    PoverRT = blk.pressure/Cubic.gas_constant(blk)/blk.temperature
+    PoverRT = blk.pressure/Cubic.gas_constant(blk)/blk._teq[pp]
 
     return _log_fug_coeff_method(PoverRT, Aeq[pp, p], b[j], bm[p], Beq[pp, p],
                                  delta_eq[pp, p, j], Zeq(p), pobj._cubic_type)
@@ -831,8 +831,6 @@ def _log_fug_coeff_method(PoverRT, A, b, bm, B, delta, Z, cubic_type):
     u = EoS_param[cubic_type]['u']
     w = EoS_param[cubic_type]['w']
     p = sqrt(u**2 - 4*w)
-    
-    print('P=',P)
     
     if cubic_type == CubicType.VDW:
         
