@@ -65,6 +65,7 @@ class MixingRuleA(Enum):
 class MixingRuleB(Enum):
     default = 0
     Jung2001 = 1
+    Average = 2
 
 
 EoS_param = {
@@ -165,6 +166,8 @@ class Cubic(EoSBase):
             b = getattr(m, cname+"_b")
             if rule == MixingRuleB.Jung2001:
                 return  rule_bm_Jung_2001(m, b, p)
+            elif rule == MixingRuleB.Average:
+                return rule_bm_average(m, b, p)
             elif rule == MixingRuleB.default:
                 return rule_bm_default(m, b, p)
             else:
@@ -610,6 +613,8 @@ class Cubic(EoSBase):
 #                 bm = sum(sum(x[xidx, i]*x[xidx, j]*(b[i]**(1/3)+b[j]**(1/3))**3/8
 #                     for j in blk.params.component_list)
 #                  for i in blk.params.component_list)
+        elif pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.Average:
+                bm = rule_bm_average_sc(blk, x, b, xidx, pp=())
         elif pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.default:
 #             return rule_bm_default(m, b, p)
                 bm = sum(x[xidx, i]*b[i] for i in blk.params.component_list)
@@ -673,6 +678,8 @@ class Cubic(EoSBase):
 #                 bm = sum(sum(x[xidx, i]*x[xidx, j]*(b[i]**(1/3)+b[j]**(1/3))**3/8
 #                     for j in blk.params.component_list)
 #                  for i in blk.params.component_list)
+        elif pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.Average:
+                bm = rule_bm_average_sc(blk, x, b, xidx, pp=())
         elif pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.default:
 #             return rule_bm_default(m, b, p)
                 bm = sum(x[xidx, i]*b[i] for i in blk.params.component_list)
@@ -729,6 +736,8 @@ class Cubic(EoSBase):
 #                 bm = sum(sum(x[xidx, i]*x[xidx, j]*(b[i]**(1/3)+b[j]**(1/3))**3/8
 #                     for j in blk.params.component_list)
 #                  for i in blk.params.component_list)
+        elif pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.Average:
+                bm = rule_bm_average_sc(blk, x, b, xidx, pp=())
         elif pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.default:
 #             return rule_bm_default(m, b, p)
                 bm = sum(x[xidx, i]*b[i] for i in blk.params.component_list)
@@ -784,6 +793,8 @@ class Cubic(EoSBase):
 #                 bm = sum(sum(x[xidx, i]*x[xidx, j]*(b[i]**(1/3)+b[j]**(1/3))**3/8
 #                     for j in blk.params.component_list)
 #                  for i in blk.params.component_list)
+        elif pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.Average:
+                bm = rule_bm_average_sc(blk, x, b, xidx, pp=())
         elif pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.default:
 #             return rule_bm_default(m, b, p)
                 bm = sum(x[xidx, i]*b[i] for i in blk.params.component_list)
@@ -887,5 +898,19 @@ def rule_bm_Jung_2001_sc(m, x, b, p, pp=()): #Specific Conditions - sc
     #pp - list of phases?
     #Jung 2001 MR
     return sum(sum(x[p, i]*x[p, j]*(b[pp, i]**(1/3)+b[pp, j]**(1/3))**3/8
+        for j in m.params.component_list)
+        for i in m.params.component_list)
+
+def rule_bm_average(m, b, p,pp=()):
+    #(bi+bj)/2
+    return sum(sum(m.mole_frac_phase_comp[p, i]*m.mole_frac_phase_comp[p, j]*(b[pp, i]+b[pp, j])/2
+        for j in m.components_in_phase(p))
+        for i in m.components_in_phase(p))
+
+def rule_bm_average_sc(m, x, b, p, pp=()): #Specific Conditions - sc
+    #p - phase
+    #pp - list of phases?
+    #(bi+bj)/2
+    return sum(sum(x[p, i]*x[p, j]*(b[pp, i]+b[pp, j])/2
         for j in m.params.component_list)
         for i in m.params.component_list)
