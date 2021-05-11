@@ -606,9 +606,10 @@ class Cubic(EoSBase):
         b = getattr(blk, cname+"_b")
         if pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.Jung2001:
 #                 return  rule_bm_Jung_2001t(m, b, p)
-                bm = sum(sum(x[xidx, i]*x[xidx, j]*(b[i]**(1/3)+b[j]**(1/3))**3/8
-                    for j in blk.params.component_list)
-                 for i in blk.params.component_list)
+                bm = rule_bm_Jung_2001_sc(blk, x, b, xidx, pp=())
+#                 bm = sum(sum(x[xidx, i]*x[xidx, j]*(b[i]**(1/3)+b[j]**(1/3))**3/8
+#                     for j in blk.params.component_list)
+#                  for i in blk.params.component_list)
         elif pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.default:
 #             return rule_bm_default(m, b, p)
                 bm = sum(x[xidx, i]*b[i] for i in blk.params.component_list)
@@ -668,9 +669,10 @@ class Cubic(EoSBase):
         b = getattr(blk, cname+"_b")
         if pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.Jung2001:
 #                 return  rule_bm_Jung_2001t(m, b, p)
-                bm = sum(sum(x[xidx, i]*x[xidx, j]*(b[i]**(1/3)+b[j]**(1/3))**3/8
-                    for j in blk.params.component_list)
-                 for i in blk.params.component_list)
+                bm = rule_bm_Jung_2001_sc(blk, x, b, xidx, pp=())
+#                 bm = sum(sum(x[xidx, i]*x[xidx, j]*(b[i]**(1/3)+b[j]**(1/3))**3/8
+#                     for j in blk.params.component_list)
+#                  for i in blk.params.component_list)
         elif pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.default:
 #             return rule_bm_default(m, b, p)
                 bm = sum(x[xidx, i]*b[i] for i in blk.params.component_list)
@@ -723,9 +725,10 @@ class Cubic(EoSBase):
         b = getattr(blk, cname+"_b")
         if pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.Jung2001:
 #                 return  rule_bm_Jung_2001t(m, b, p)
-                bm = sum(sum(x[xidx, i]*x[xidx, j]*(b[i]**(1/3)+b[j]**(1/3))**3/8
-                    for j in blk.params.component_list)
-                 for i in blk.params.component_list)
+                bm = rule_bm_Jung_2001_sc(blk, x, b, xidx, pp=())
+#                 bm = sum(sum(x[xidx, i]*x[xidx, j]*(b[i]**(1/3)+b[j]**(1/3))**3/8
+#                     for j in blk.params.component_list)
+#                  for i in blk.params.component_list)
         elif pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.default:
 #             return rule_bm_default(m, b, p)
                 bm = sum(x[xidx, i]*b[i] for i in blk.params.component_list)
@@ -777,9 +780,10 @@ class Cubic(EoSBase):
         b = getattr(blk, cname+"_b")
         if pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.Jung2001:
 #                 return  rule_bm_Jung_2001t(m, b, p)
-                bm = sum(sum(x[xidx, i]*x[xidx, j]*(b[i]**(1/3)+b[j]**(1/3))**3/8
-                    for j in blk.params.component_list)
-                 for i in blk.params.component_list)
+                bm = rule_bm_Jung_2001_sc(blk, x, b, xidx, pp=())
+#                 bm = sum(sum(x[xidx, i]*x[xidx, j]*(b[i]**(1/3)+b[j]**(1/3))**3/8
+#                     for j in blk.params.component_list)
+#                  for i in blk.params.component_list)
         elif pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.default:
 #             return rule_bm_default(m, b, p)
                 bm = sum(x[xidx, i]*b[i] for i in blk.params.component_list)
@@ -849,7 +853,8 @@ def _log_fug_coeff_method(A, b, bm, B, delta, Z, cubic_type):
     u = EoS_param[cubic_type]['u']
     w = EoS_param[cubic_type]['w']
     p = sqrt(u**2 - 4*w)
-
+    print('b:',b)
+    print('bm:',bm)
     return ((b/bm*(Z-1)*(B*p) - safe_log(Z-B, eps=1e-6)*(B*p) +
              A*(b/bm - delta)*safe_log((2*Z + B*(u + p))/(2*Z + B*(u - p)),
                                        eps=1e-6)) /
@@ -876,3 +881,11 @@ def rule_bm_Jung_2001(m, b, p,pp=()):
     return sum(sum(m.mole_frac_phase_comp[p, i]*m.mole_frac_phase_comp[p, j]*(b[pp, i]**(1/3)+b[pp, j]**(1/3))**3/8
         for j in m.components_in_phase(p))
         for i in m.components_in_phase(p))
+
+def rule_bm_Jung_2001_sc(m, x, b, p, pp=()): #Specific Conditions - sc
+    #p - phase
+    #pp - list of phases?
+    #Jung 2001 MR
+    return sum(sum(x[p, i]*x[p, j]*(b[pp, i]**(1/3)+b[pp, j]**(1/3))**3/8
+        for j in m.params.component_list)
+        for i in m.params.component_list)
