@@ -64,6 +64,7 @@ class MixingRuleA(Enum):
 
 class MixingRuleB(Enum):
     default = 0
+    Jung2001 = 1
 
 
 EoS_param = {
@@ -77,6 +78,10 @@ CubicConfig.declare("type", ConfigValue(
     domain=In(CubicType),
     description="Equation of state to use",
     doc="Enum indicating type of cubic equation of state to use."))
+CubicConfig.declare("mixing_rule_b", ConfigValue(
+    domain=In(MixingRuleB),
+    description="b mixing rule to use",
+    doc="Enum mixing rule of cubic equation of state to use."))
 
 
 class Cubic(EoSBase):
@@ -158,7 +163,9 @@ class Cubic(EoSBase):
                 rule = MixingRuleB.default
 
             b = getattr(m, cname+"_b")
-            if rule == MixingRuleB.default:
+            if rule == MixingRuleB.Jung2001:
+                return  rule_bm_Jung_2001(m, b, p)
+            elif rule == MixingRuleB.default:
                 return rule_bm_default(m, b, p)
             else:
                 raise ConfigurationError(
@@ -168,7 +175,6 @@ class Cubic(EoSBase):
 
         b.add_component(cname+'_bm',
                         Expression(b.phase_list, rule=rule_bm))
-
         def rule_A(m, p):
             am = getattr(m, cname+"_am")
             return (am[p]*m.pressure /
@@ -598,7 +604,16 @@ class Cubic(EoSBase):
                  for i in blk.params.component_list)
 
         b = getattr(blk, cname+"_b")
-        bm = sum(x[xidx, i]*b[i] for i in blk.params.component_list)
+        if pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.Jung2001:
+#                 return  rule_bm_Jung_2001t(m, b, p)
+                bm = sum(sum(x[xidx, i]*x[xidx, j]*(b[i]**(1/3)+b[j]**(1/3))**3/8
+                    for j in blk.params.component_list)
+                 for i in blk.params.component_list)
+        elif pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.default:
+#             return rule_bm_default(m, b, p)
+                bm = sum(x[xidx, i]*b[i] for i in blk.params.component_list)
+#         bm = sum(x[xidx, i]*b[i] for i in blk.params.component_list)
+
 
         A = am*blk.pressure/(Cubic.gas_constant(blk) *
                              blk.temperature_bubble[pp])**2
@@ -651,7 +666,16 @@ class Cubic(EoSBase):
                  for i in blk.params.component_list)
 
         b = getattr(blk, cname+"_b")
-        bm = sum(x[xidx, i]*b[i] for i in blk.params.component_list)
+        if pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.Jung2001:
+#                 return  rule_bm_Jung_2001t(m, b, p)
+                bm = sum(sum(x[xidx, i]*x[xidx, j]*(b[i]**(1/3)+b[j]**(1/3))**3/8
+                    for j in blk.params.component_list)
+                 for i in blk.params.component_list)
+        elif pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.default:
+#             return rule_bm_default(m, b, p)
+                bm = sum(x[xidx, i]*b[i] for i in blk.params.component_list)
+#         bm = sum(x[xidx, i]*b[i] for i in blk.params.component_list)
+
 
         A = am*blk.pressure/(Cubic.gas_constant(blk) *
                              blk.temperature_dew[pp])**2
@@ -697,7 +721,15 @@ class Cubic(EoSBase):
                  for i in blk.params.component_list)
 
         b = getattr(blk, cname+"_b")
-        bm = sum(x[xidx, i]*b[i] for i in blk.params.component_list)
+        if pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.Jung2001:
+#                 return  rule_bm_Jung_2001t(m, b, p)
+                bm = sum(sum(x[xidx, i]*x[xidx, j]*(b[i]**(1/3)+b[j]**(1/3))**3/8
+                    for j in blk.params.component_list)
+                 for i in blk.params.component_list)
+        elif pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.default:
+#             return rule_bm_default(m, b, p)
+                bm = sum(x[xidx, i]*b[i] for i in blk.params.component_list)
+#         bm = sum(x[xidx, i]*b[i] for i in blk.params.component_list)
 
         A = am*blk.pressure_bubble[pp]/(Cubic.gas_constant(blk) *
                                         blk.temperature)**2
@@ -743,7 +775,16 @@ class Cubic(EoSBase):
                  for i in blk.params.component_list)
 
         b = getattr(blk, cname+"_b")
-        bm = sum(x[xidx, i]*b[i] for i in blk.params.component_list)
+        if pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.Jung2001:
+#                 return  rule_bm_Jung_2001t(m, b, p)
+                bm = sum(sum(x[xidx, i]*x[xidx, j]*(b[i]**(1/3)+b[j]**(1/3))**3/8
+                    for j in blk.params.component_list)
+                 for i in blk.params.component_list)
+        elif pobj.config.equation_of_state_options["mixing_rule_b"] == MixingRuleB.default:
+#             return rule_bm_default(m, b, p)
+                bm = sum(x[xidx, i]*b[i] for i in blk.params.component_list)
+#         bm = sum(x[xidx, i]*b[i] for i in blk.params.component_list)
+
 
         A = am*blk.pressure_dew[pp]/(Cubic.gas_constant(blk) *
                                      blk.temperature)**2
@@ -829,3 +870,9 @@ def rule_am_default(m, cname, a, p, pp=()):
 def rule_bm_default(m, b, p):
     return sum(m.mole_frac_phase_comp[p, i]*b[i]
                for i in m.components_in_phase(p))
+
+def rule_bm_Jung_2001(m, b, p,pp=()):
+    #Jung 2001 MR
+    return sum(sum(m.mole_frac_phase_comp[p, i]*m.mole_frac_phase_comp[p, j]*(b[pp, i]**(1/3)+b[pp, j]**(1/3))**3/8
+        for j in m.components_in_phase(p))
+        for i in m.components_in_phase(p))
