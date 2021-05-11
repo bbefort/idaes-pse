@@ -102,8 +102,11 @@ class Cubic(EoSBase):
                 return 0.48 + 1.574*cobj.omega - \
                        0.176*cobj.omega**2
             elif ctype == CubicType.VDW:
-                return 0.0 + 0.0*cobj.omega - \
-                       0.0*cobj.omega**2
+                return 0.37464 + 1.54226*cobj.omega - \
+                       0.26992*cobj.omega**2
+#                 return 0.0001 + 0.0*cobj.omega - \
+#                        0.0*cobj.omega**2
+
             else:
                 raise BurntToast(
                         "{} received unrecognized cubic type. This should "
@@ -291,21 +294,6 @@ class Cubic(EoSBase):
                             Expression(b.params._pe_pairs,
                                        b.phase_component_set,
                                        rule=rule_delta_eq))
-            
-            def rule_Term1Coeff_eq(m,p1,p2):
-                return m.pressure/Cubic.gas_constant(b)/m._teq[p1,p2]
-            b.add_component("_"+cname+"_Term1Coeff_eq",
-                            Expression(b.params._pe_pairs,
-                                       rule=rule_Term1Coeff_eq)
-                            
-            def rule_Term3_eq(m,p1,p2,p3,i):
-                a = getattr(m, "_"+cname+"_a_eq")
-                kappa = getattr(m.params, cname+"_kappa")
-                return  2*m.pressure/(Cubic.gas_constant(b)*m._teq[p1,p2])**2*sum(((a[p1, p2, i]*a[p1, p2, j])**(1/2)*(1-kappa[i,j])) for j in m.components_in_phase(p3))
-            b.add_component("_"+cname+"_Term3_eq",
-                            Expression(b.params._pe_pairs,
-                                       b.phase_component_set,
-                                       rule=rule_Term3_eq))
 
         # Set up external function calls
         b.add_component("_"+cname+"_ext_func_param",
@@ -580,11 +568,9 @@ class Cubic(EoSBase):
         B = getattr(blk, cname+"_B")[p]
         delta = getattr(blk, cname+"_delta")[p, j]
         Z = blk.compress_fact_phase[p]
-        Term1Coeff = blk.pressure/Cubic.gas_constant(blk)/blk.temperature
-        Term3 = 2*blk.pressure/(Cubic.gas_constant(blk)*blk.temperature)**2*sum(((a[i]*a[j])**(1/2)*(1-k[i,j])) for j in blk.components_in_phase(p))
         
-        if cname = CubicType.VDW:
-            return exp(_log_fug_coeff_method_VDW(Term1Coeff, Term3, b, B, Z, cubic_type))
+        if cname == CubicType.VDW:
+            return exp(_log_fug_coeff_method_VDW(A, b, bm, B, delta, Z, ctype))
         else:
             return exp(_log_fug_coeff_method(A, b, bm, B, delta, Z, ctype))
 
@@ -643,11 +629,8 @@ class Cubic(EoSBase):
 
         Z = proc(f, A, B)
 
-        Term1Coeff = blk.pressure/Cubic.gas_constant(blk)/blk.temperature_bubble
-        Term3 = 2*blk.pressure/(Cubic.gas_constant(blk)*blk.temperature_bubble)**2*sum(((a[i]*a[j])**(1/2)*(1-kappa[i,j])) for j in blk.components_in_phase(p))
-        
-        if cname = CubicType.VDW:
-            return _log_fug_coeff_method_VDW(Term1Coeff, Term3, b, B, Z, cubic_type)
+        if cname == 'VDW':
+            return _log_fug_coeff_method_VDW(A, b[j], bm, B, delta, Z, ctype)
         else:
             return _log_fug_coeff_method(A, b[j], bm, B, delta, Z, ctype)
 
@@ -702,11 +685,8 @@ class Cubic(EoSBase):
 
         Z = proc(f, A, B)
 
-        Term1Coeff = blk.pressure/Cubic.gas_constant(blk)/blk.temperature_dew
-        Term3 = 2*blk.pressure/(Cubic.gas_constant(blk)*blk.temperature_dew)**2*sum(((a[i]*a[j])**(1/2)*(1-kappa[i,j])) for j in blk.components_in_phase(p))
-        
-        if cname = CubicType.VDW:
-            return _log_fug_coeff_method_VDW(Term1Coeff, Term3, b, B, Z, cubic_type)
+        if cname == 'VDW':
+            return _log_fug_coeff_method_VDW(A, b[j], bm, B, delta, Z, ctype)
         else:
             return _log_fug_coeff_method(A, b[j], bm, B, delta, Z, ctype)
 
@@ -753,12 +733,9 @@ class Cubic(EoSBase):
             proc = getattr(blk, "_"+cname+"_proc_Z_liq")
 
         Z = proc(f, A, B)
-        
-        Term1Coeff = blk.pressure_bubble/Cubic.gas_constant(blk)/blk.temperature
-        Term3 = 2*blk.pressure_bubble/(Cubic.gas_constant(blk)*blk.temperature)**2*sum(((a[i]*a[j])**(1/2)*(1-kappa[i,j])) for j in blk.components_in_phase(p))
-        
-        if cname = CubicType.VDW:
-            return _log_fug_coeff_method_VDW(Term1Coeff, Term3, b, B, Z, cubic_type)
+
+        if cname == 'VDW':
+            return _log_fug_coeff_method_VDW(A, b[j], bm, B, delta, Z, ctype)
         else:
             return _log_fug_coeff_method(A, b[j], bm, B, delta, Z, ctype)
 
@@ -804,12 +781,9 @@ class Cubic(EoSBase):
             proc = getattr(blk, "_"+cname+"_proc_Z_liq")
 
         Z = proc(f, A, B)
-        
-        Term1Coeff = blk.pressure_dew/Cubic.gas_constant(blk)/blk.temperature
-        Term3 = 2*blk.pressure_dew/(Cubic.gas_constant(blk)*blk.temperature)**2*sum(((a[i]*a[j])**(1/2)*(1-kappa[i,j])) for j in blk.components_in_phase(p))
-        
-        if cname = CubicType.VDW:
-            return _log_fug_coeff_method_VDW(Term1Coeff, Term3, b, B, Z, cubic_type)
+
+        if cname == 'VDW':
+            return _log_fug_coeff_method_VDW(A, b[j], bm, B, delta, Z, ctype)
         else:
             return _log_fug_coeff_method(A, b[j], bm, B, delta, Z, ctype)
 
@@ -850,12 +824,10 @@ def _log_fug_coeff_phase_comp_eq(blk, p, j, pp):
 
     def Zeq(p):
         return proc(f, Aeq[pp, p], Beq[pp, p])
-    
-    Term1Coeff_eq = getattr(blk, "_"+cname+"_Term1Coeff_eq")
-    Term3_eq = getattr(blk, "_"+cname+"_Term3_eq")
 
-    if cname = CubicType.VDW:
-        return _log_fug_coeff_method_VDW(Term1Coeff_eq[pp], Term3_eq[pp,p,j], b[j], Beq[pp,p], Zeq(p), pobj._cubic_type)
+    if cname == 'VDW':
+        return _log_fug_coeff_method_VDW(Aeq[pp, p], b[j], bm[p], Beq[pp, p],
+                                 delta_eq[pp, p, j], Zeq(p), pobj._cubic_type)
     else:
         return _log_fug_coeff_method(Aeq[pp, p], b[j], bm[p], Beq[pp, p],
                                  delta_eq[pp, p, j], Zeq(p), pobj._cubic_type)
@@ -871,11 +843,9 @@ def _log_fug_coeff_method(A, b, bm, B, delta, Z, cubic_type):
                                        eps=1e-6)) /
             (B*p))
 
-def _log_fug_coeff_method_VDW(Term1Coeff, Term3, b, B, Z, cubic_type):
-    #Term1Coeff: P/RT
-    #Term3: 2*sum((a[i,j]*P/(R*T)**2) for j in m.components_in_phase(p))
+def _log_fug_coeff_method_VDW(A, b, bm, B, delta, Z, cubic_type):
 
-    return b*Term1Coeff/(Z-B) - safe_log(Z-B, eps=1e-6) - Term3/Z
+    return (b/bm)*B/(Z-B) - safe_log(Z-B, eps=1e-6) - delta*A/Z
 
 
 
