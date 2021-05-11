@@ -56,6 +56,7 @@ def cubic_roots_available():
 class CubicType(Enum):
     PR = 0
     SRK = 1
+    VDW = 2
 
 
 class MixingRuleA(Enum):
@@ -67,8 +68,9 @@ class MixingRuleB(Enum):
 
 
 EoS_param = {
-        CubicType.PR: {'u': 2, 'w': -1, 'omegaA': 0.45724, 'coeff_b': 0.07780},
-        CubicType.SRK: {'u': 1, 'w': 0, 'omegaA': 0.42748, 'coeff_b': 0.08664}
+        CubicType.PR: {'u': 2, 'w': -1, 'omegaA': 0.45724, 'omegaB': 0.07780},
+        CubicType.SRK: {'u': 1, 'w': 0, 'omegaA': 0.42748, 'omegaB': 0.08664},
+        CubicType.VDW: {'u': 0, 'w': 0, 'omegaA':27/64, 'omegaB': 1/8}
         }
 
 
@@ -99,6 +101,9 @@ class Cubic(EoSBase):
             elif ctype == CubicType.SRK:
                 return 0.48 + 1.574*cobj.omega - \
                        0.176*cobj.omega**2
+            elif ctype == CubicType.VDW:
+                return 0.0 + 0.0*cobj.omega - \
+                       0.0*cobj.omega**2
             else:
                 raise BurntToast(
                         "{} received unrecognized cubic type. This should "
@@ -125,7 +130,7 @@ class Cubic(EoSBase):
 
         def func_b(m, j):
             cobj = m.params.get_component(j)
-            return (EoS_param[ctype]['coeff_b'] * Cubic.gas_constant(b) *
+            return (EoS_param[ctype]['omegaB'] * Cubic.gas_constant(b) *
                     cobj.temperature_crit/cobj.pressure_crit)
         b.add_component(cname+'_b',
                         Expression(b.component_list,
