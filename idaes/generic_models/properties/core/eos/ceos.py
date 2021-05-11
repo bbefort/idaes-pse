@@ -102,10 +102,10 @@ class Cubic(EoSBase):
                 return 0.48 + 1.574*cobj.omega - \
                        0.176*cobj.omega**2
             elif ctype == CubicType.VDW:
-                return 0.37464 + 1.54226*cobj.omega - \
-                       0.26992*cobj.omega**2
-#                 return 0.0001 + 0.0*cobj.omega - \
-#                        0.0*cobj.omega**2
+#                 return 0.37464 + 1.54226*cobj.omega - \
+#                        0.26992*cobj.omega**2
+                return 0.0001 + 0.0*cobj.omega - \
+                       0.0*cobj.omega**2
 
             else:
                 raise BurntToast(
