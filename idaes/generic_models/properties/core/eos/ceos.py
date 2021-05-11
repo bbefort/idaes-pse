@@ -104,7 +104,9 @@ class Cubic(EoSBase):
             elif ctype == CubicType.VDW:
 #                 return 0.37464 + 1.54226*cobj.omega - \
 #                        0.26992*cobj.omega**2
-                return 0.0001 + 0.0*cobj.omega - \
+#                 return 0.0001 + 0.0*cobj.omega - \
+#                        0.0*cobj.omega**2
+                return 0.0 + 0.0*cobj.omega - \
                        0.0*cobj.omega**2
 
             else:
@@ -436,6 +438,10 @@ class Cubic(EoSBase):
                                  get_method(blk, "enth_mol_ig_comp", j)(
                                             blk, cobj(blk, j), blk.temperature)
                                  for j in blk.components_in_phase(p)))
+#         return ((Cubic.gas_constant(blk)*blk.temperature*(Z-1) + sum(blk.mole_frac_phase_comp[p, j] *
+#                                  get_method(blk, "enth_mol_ig_comp", j)(
+#                                             blk, cobj(blk, j), blk.temperature)
+#                                  for j in blk.components_in_phase(p))))
 
     @staticmethod
     def enth_mol_phase_comp(blk, p, j):
@@ -461,6 +467,8 @@ class Cubic(EoSBase):
                  Cubic.gas_constant(blk)*blk.temperature*(Z-1)*bm*EoS_p) /
                 (bm*EoS_p) + get_method(blk, "enth_mol_ig_comp", j)(
                                         blk, cobj(blk, j), blk.temperature))
+#         return ((Cubic.gas_constant(blk)*blk.temperature*(Z-1) + get_method(blk, "enth_mol_ig_comp", j)(
+#                                         blk, cobj(blk, j), blk.temperature)))
 
     @staticmethod
     def entr_mol_phase(blk, p):
@@ -844,7 +852,8 @@ def _log_fug_coeff_method(A, b, bm, B, delta, Z, cubic_type):
             (B*p))
 
 def _log_fug_coeff_method_VDW(A, b, bm, B, delta, Z, cubic_type):
-
+    print('A:',A)
+    print('Using _log_fug_coeff_method_VDW') 
     return (b/bm)*B/(Z-B) - safe_log(Z-B, eps=1e-6) - delta*A/Z
 
 
