@@ -359,7 +359,7 @@ class Cubic(EoSBase):
                 param_block.component_list,
                 within=Reals,
                 initialize=kappa_data,
-                doc=cname+' binary interaction parameters',
+                doc=cname+'binary interaction parameters',
                 units=None))
 
     @staticmethod
