@@ -67,6 +67,10 @@ class MixingRuleB(Enum):
     Jung2001 = 1
     Average = 2
 
+class ParamTempDependence(Enum):
+    default = 0
+    Linear = 1
+    Parabolic = 2
 
 EoS_param = {
         CubicType.PR: {'u': 2, 'w': -1, 'omegaA': 0.45724, 'coeff_b': 0.07780},
@@ -83,7 +87,16 @@ CubicConfig.declare("mixing_rule_b", ConfigValue(
     domain=In(MixingRuleB),
     description="b mixing rule to use",
     doc="Enum mixing rule of cubic equation of state to use."))
-
+CubicConfig.declare("param_temp_dependence", ConfigValue(
+    domain=In(ParamTempDependence),
+#     default=ParamTempDependence.default,
+    description="",
+    doc=""))
+# CubicConfig.declare("param_temp_dependence", ConfigValue(
+#     domain=In(ParamTempDependence),
+#     default=ParamTempDependence.default,
+#     description="kappa temperature dependence to use",
+#     doc="Enum temperature dependence of mixing rule of cubic equation of state to use."))
 
 class Cubic(EoSBase):
 
@@ -116,6 +129,25 @@ class Cubic(EoSBase):
                                    rule=func_fw,
                                    doc='EoS S factor'))
 
+        def func_k(m,p,j):#convert kappa from dictionary to k
+            try:
+                rule = m.params.get_phase(p).config.equation_of_state_options[
+                    "param_temp_dependence"]
+            except KeyError:
+                rule = ParamTempDependence.default
+            
+            if rule == ParamTempDependence.default:
+                return getattr(m.params, cname+"_kappa")
+            elif rule == ParamTempDependence.Linear:
+                return rule_kappa_Linear(m,cname,p)
+            else:
+                raise ConfigurationError(
+                    "{} Unrecognized option for ParamTempDependence "
+                    "param_temp_dependence: {}. Must be an instance of ParamTempDependence "
+                    "Enum.".format(m.name, rule))
+        b.add_component(cname+'_k',
+                        Expression(b.phase_list,b.component_list,rule=func_k))
+        
         def func_a(m, j):
             cobj = m.params.get_component(j)
             fw = getattr(m, cname+"_fw")
@@ -579,6 +611,10 @@ class Cubic(EoSBase):
         pobj = blk.params.get_phase(p)
         ctype = pobj._cubic_type
         cname = pobj.config.equation_of_state_options["type"].name
+#         print('cname:',cname)
+        ckappa = pobj.config.equation_of_state_options[
+                    "param_temp_dependence"].name
+#         print('ckappa:',ckappa)
 
         if pobj.is_liquid_phase():
             x = blk.mole_frac_comp
@@ -600,8 +636,20 @@ class Cubic(EoSBase):
                      cobj.pressure_crit) *
                     ((1+fw*(1-sqrt(blk.temperature_bubble[pp] /
                                    cobj.temperature_crit)))**2))
-
-        kappa = getattr(blk.params, cname+"_kappa")
+        
+#         if pobj.config.equation_of_state_options["param_temp_dependence"] == ParamTempDependence.default:
+#                 kappa = getattr(blk.params, cname+"_kappa")
+#         elif pobj.config.equation_of_state_options["param_temp_dependence"] == ParamTempDependence.Linear:
+#                 kappa = rule_kappa_Linear(blk,cname,p)
+#         if blk.params.get_phase(p).config.equation_of_state_options["param_temp_dependence"] == ParamTempDependence.Linear:
+#                 kappa = rule_kappa_Linear(blk,cname,p)
+#         else:
+#                 kappa = getattr(blk.params, cname+"_kappa")
+        if ckappa == ParamTempDependence.Linear:
+                kappa = rule_kappa_Linear(blk,cname,p)
+        else:
+                kappa = getattr(blk.params, cname+"_kappa")
+        
         am = sum(sum(x[xidx, i]*x[xidx, j]*sqrt(a(i)*a(j))*(1-kappa[i, j])
                      for j in blk.params.component_list)
                  for i in blk.params.component_list)
@@ -644,6 +692,8 @@ class Cubic(EoSBase):
         pobj = blk.params.get_phase(p)
         ctype = pobj._cubic_type
         cname = pobj.config.equation_of_state_options["type"].name
+        ckappa = pobj.config.equation_of_state_options[
+                    "param_temp_dependence"].name
 
         if pobj.is_liquid_phase():
             x = blk._mole_frac_tdew
@@ -666,7 +716,10 @@ class Cubic(EoSBase):
                     ((1+fw*(1-sqrt(blk.temperature_dew[pp] /
                                    cobj.temperature_crit)))**2))
 
-        kappa = getattr(blk.params, cname+"_kappa")
+        if ckappa == ParamTempDependence.Linear:
+                kappa = rule_kappa_Linear(blk,cname,p)
+        else:
+                kappa = getattr(blk.params, cname+"_kappa")
         am = sum(sum(x[xidx, i]*x[xidx, j]*sqrt(a(i)*a(j))*(1-kappa[i, j])
                      for j in blk.params.component_list)
                  for i in blk.params.component_list)
@@ -709,6 +762,8 @@ class Cubic(EoSBase):
         pobj = blk.params.get_phase(p)
         ctype = pobj._cubic_type
         cname = pobj.config.equation_of_state_options["type"].name
+        ckappa = pobj.config.equation_of_state_options[
+                    "param_temp_dependence"].name
 
         if pobj.is_liquid_phase():
             x = blk.mole_frac_comp
@@ -723,7 +778,10 @@ class Cubic(EoSBase):
                              "with this bug.".format(blk.name))
 
         a = getattr(blk, cname+"_a")
-        kappa = getattr(blk.params, cname+"_kappa")
+        if ckappa == ParamTempDependence.Linear:
+                kappa = rule_kappa_Linear(blk,cname,p)
+        else:
+                kappa = getattr(blk.params, cname+"_kappa")
         am = sum(sum(x[xidx, i]*x[xidx, j] *
                      sqrt(a[i]*a[j])*(1-kappa[i, j])
                      for j in blk.params.component_list)
@@ -766,6 +824,8 @@ class Cubic(EoSBase):
         pobj = blk.params.get_phase(p)
         ctype = pobj._cubic_type
         cname = pobj.config.equation_of_state_options["type"].name
+        ckappa = pobj.config.equation_of_state_options[
+                    "param_temp_dependence"].name
 
         if pobj.is_liquid_phase():
             x = blk._mole_frac_pdew
@@ -780,7 +840,10 @@ class Cubic(EoSBase):
                              "with this bug.".format(blk.name))
 
         a = getattr(blk, cname+"_a")
-        kappa = getattr(blk.params, cname+"_kappa")
+        if ckappa == ParamTempDependence.Linear:
+                kappa = rule_kappa_Linear(blk,cname,p)
+        else:
+                kappa = getattr(blk.params, cname+"_kappa")
         am = sum(sum(x[xidx, i]*x[xidx, j] *
                      sqrt(a[i]*a[j])*(1-kappa[i, j])
                      for j in blk.params.component_list)
@@ -839,6 +902,8 @@ def _log_fug_coeff_phase_comp_eq(blk, p, j, pp):
     pobj = blk.params.get_phase(p)
     if not (pobj.is_vapor_phase() or pobj.is_liquid_phase()):
         raise PropertyNotSupportedError(_invalid_phase_msg(blk.name, p))
+    ckappa = pobj.config.equation_of_state_options[
+                "param_temp_dependence"].name
 
     cname = pobj._cubic_type.name
     b = getattr(blk, cname+"_b")
@@ -882,6 +947,9 @@ def rule_am_default(m, cname, a, p, pp=()):
         for j in m.components_in_phase(p))
         for i in m.components_in_phase(p))
 
+def rule_kappa_Linear(m,cname,p):
+    kappa = getattr(m.params, cname+"_kappa")
+    return kappa
 
 def rule_bm_default(m, b, p):
     return sum(m.mole_frac_phase_comp[p, i]*b[i]
