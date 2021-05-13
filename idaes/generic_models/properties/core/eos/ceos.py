@@ -568,8 +568,6 @@ class Cubic(EoSBase):
             raise PropertyNotSupportedError(_invalid_phase_msg(blk.name, p))
 
         cname = pobj._cubic_type.name
-        k = getattr(m.params, cname+"_kappa")
-        a = getattr(blk, cname+"_a")[j]
         b = getattr(blk, cname+"_b")[j]
         bm = getattr(blk, cname+"_bm")[p]
         A = getattr(blk, cname+"_A")[p]
@@ -577,7 +575,7 @@ class Cubic(EoSBase):
         delta = getattr(blk, cname+"_delta")[p, j]
         Z = blk.compress_fact_phase[p]
         
-        if cname == CubicType.VDW:
+        if cname == 'VDW':
             return exp(_log_fug_coeff_method_VDW(A, b, bm, B, delta, Z, ctype))
         else:
             return exp(_log_fug_coeff_method(A, b, bm, B, delta, Z, ctype))
