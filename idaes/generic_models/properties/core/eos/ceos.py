@@ -145,6 +145,19 @@ class Cubic(EoSBase):
                         Expression(b.component_list,
                                    rule=func_b,
                                    doc='Component b coefficient'))
+        
+#         def func_kT(m, i, j):
+#             cobj_i = m.params.get_component(i)
+#             cobj_j = m.params.get_component(j)
+#             k = getattr(m.params, cname+"_kappa")
+#             return k[i,j] + *m.temperature*k[i,j]
+            
+#              k = getattr(m.params, cname+"_kappa")
+#     return sum(sum(
+#         m.mole_frac_phase_comp[p, i]*m.mole_frac_phase_comp[p, j] *
+#         sqrt(a[pp, i]*a[pp, j])*(1-k[i, j])
+#         for j in m.components_in_phase(p))
+#         for i in m.components_in_phase(p))
 
         def rule_am(m, p):
             try:
@@ -204,7 +217,7 @@ class Cubic(EoSBase):
             kappa = getattr(m.params, cname+"_kappa")
             return (2*sqrt(a[i])/am[p] *
                     sum(m.mole_frac_phase_comp[p, j]*sqrt(a[j]) *
-                        (1-kappa[i, j])
+                        (1-(kappa['A'][i, j] + kappa['B'][i,j]*m.temperature))
                         for j in b.components_in_phase(p)))
         b.add_component(cname+"_delta",
                         Expression(b.phase_component_set,
@@ -218,7 +231,7 @@ class Cubic(EoSBase):
             return -((Cubic.gas_constant(b)/2)*sqrt(EoS_param[ctype]['omegaA']) *
                      sum(sum(m.mole_frac_phase_comp[p, i] *
                              m.mole_frac_phase_comp[p, j] *
-                             (1-kappa[i, j]) *
+                             (1-(kappa['A'][i, j] + kappa['B'][i,j]*m.temperature)) *
                              (fw[j]*sqrt(a[i] *
                               m.params.get_component(j).temperature_crit /
                               m.params.get_component(j).pressure_crit) +
@@ -294,7 +307,7 @@ class Cubic(EoSBase):
                 kappa = getattr(m.params, cname+"_kappa")
                 return (2*sqrt(a[p1, p2, i])/am[p1, p2, p3] *
                         sum(m.mole_frac_phase_comp[p3, j]*sqrt(a[p1, p2, j]) *
-                            (1-kappa[i, j])
+                            (1-(kappa['A'][i, j] + kappa['B'][i,j]*m._teq))
                             for j in m.components_in_phase(p3)))
             b.add_component("_"+cname+"_delta_eq",
                             Expression(b.params._pe_pairs,
@@ -334,6 +347,16 @@ class Cubic(EoSBase):
                 initialize=kappa_data,
                 doc=cname+' binary interaction parameters',
                 units=None))
+        
+#         cobj.cp_mol_ig_comp_coeff_A = Var(
+#             doc="Shomate A parameter for ideal gas molar heat capacity",
+#             units=pyunits.J*pyunits.mol**-1*pyunits.K**-1)
+#         set_param_from_config(cobj, param="cp_mol_ig_comp_coeff", index="A")
+
+#         cobj.cp_mol_ig_comp_coeff_B = Var(
+#             doc="Shomate B parameter for ideal gas molar heat capacity",
+#             units=pyunits.J*pyunits.mol**-1*pyunits.K**-1*pyunits.kiloK**-1)
+#         set_param_from_config(cobj, param="cp_mol_ig_comp_coeff", index="B
 
     @staticmethod
     def compress_fact_phase(b, p):
@@ -607,7 +630,7 @@ class Cubic(EoSBase):
                                    cobj.temperature_crit)))**2))
 
         kappa = getattr(blk.params, cname+"_kappa")
-        am = sum(sum(x[xidx, i]*x[xidx, j]*sqrt(a(i)*a(j))*(1-kappa[i, j])
+        am = sum(sum(x[xidx, i]*x[xidx, j]*sqrt(a(i)*a(j))*(1-(kappa['A'][i, j] + kappa['B'][i,j]*blk.temperature_bubble[pp]))
                      for j in blk.component_list)
                  for i in blk.component_list)
 
@@ -619,7 +642,7 @@ class Cubic(EoSBase):
         B = bm*blk.pressure/(Cubic.gas_constant(blk) *
                              blk.temperature_bubble[pp])
 
-        delta = (2*sqrt(a(j))/am * sum(x[xidx, i]*sqrt(a(i))*(1-kappa[j, i])
+        delta = (2*sqrt(a(j))/am * sum(x[xidx, i]*sqrt(a(i))*(1-(kappa['A'][i, j] + kappa['B'][i,j]*blk.temperature_bubble[pp]))
                                        for i in blk.component_list))
 
         f = getattr(blk, "_"+cname+"_ext_func_param")
@@ -666,7 +689,7 @@ class Cubic(EoSBase):
                                    cobj.temperature_crit)))**2))
 
         kappa = getattr(blk.params, cname+"_kappa")
-        am = sum(sum(x[xidx, i]*x[xidx, j]*sqrt(a(i)*a(j))*(1-kappa[i, j])
+        am = sum(sum(x[xidx, i]*x[xidx, j]*sqrt(a(i)*a(j))*(1-(kappa['A'][i, j] + kappa['B'][i,j]*blk.temperature_dew[pp]))
                      for j in blk.component_list)
                  for i in blk.component_list)
 
@@ -678,7 +701,7 @@ class Cubic(EoSBase):
         B = bm*blk.pressure/(Cubic.gas_constant(blk) *
                              blk.temperature_dew[pp])
 
-        delta = (2*sqrt(a(j))/am * sum(x[xidx, i]*sqrt(a(i))*(1-kappa[j, i])
+        delta = (2*sqrt(a(j))/am * sum(x[xidx, i]*sqrt(a(i))*(1-(kappa['A'][i, j] + kappa['B'][i,j]*blk.temperature_dew[pp]))
                                        for i in blk.component_list))
 
         f = getattr(blk, "_"+cname+"_ext_func_param")
@@ -718,7 +741,7 @@ class Cubic(EoSBase):
         a = getattr(blk, cname+"_a")
         kappa = getattr(blk.params, cname+"_kappa")
         am = sum(sum(x[xidx, i]*x[xidx, j] *
-                     sqrt(a[i]*a[j])*(1-kappa[i, j])
+                     sqrt(a[i]*a[j])*(1-(kappa['A'][i, j] + kappa['B'][i,j]*blk.temperature))
                      for j in blk.component_list)
                  for i in blk.component_list)
 
@@ -730,7 +753,7 @@ class Cubic(EoSBase):
         B = bm*blk.pressure_bubble[pp]/(Cubic.gas_constant(blk) *
                                         blk.temperature)
 
-        delta = (2*sqrt(a[j])/am * sum(x[xidx, i]*sqrt(a[i])*(1-kappa[j, i])
+        delta = (2*sqrt(a[j])/am * sum(x[xidx, i]*sqrt(a[i])*(1-(kappa['A'][i, j] + kappa['B'][i,j]*blk.temperature))
                                        for i in blk.component_list))
 
         f = getattr(blk, "_"+cname+"_ext_func_param")
@@ -771,7 +794,7 @@ class Cubic(EoSBase):
         a = getattr(blk, cname+"_a")
         kappa = getattr(blk.params, cname+"_kappa")
         am = sum(sum(x[xidx, i]*x[xidx, j] *
-                     sqrt(a[i]*a[j])*(1-kappa[i, j])
+                     sqrt(a[i]*a[j])*(1-(kappa['A'][i, j] + kappa['B'][i,j]*blk.temperature))
                      for j in blk.component_list)
                  for i in blk.component_list)
 
@@ -782,7 +805,7 @@ class Cubic(EoSBase):
                                      blk.temperature)**2
         B = bm*blk.pressure_dew[pp]/(Cubic.gas_constant(blk)*blk.temperature)
 
-        delta = (2*sqrt(a[j])/am * sum(x[xidx, i]*sqrt(a[i])*(1-kappa[j, i])
+        delta = (2*sqrt(a[j])/am * sum(x[xidx, i]*sqrt(a[i])*(1-(kappa['A'][i, j] + kappa['B'][i,j]*blk.temperature))
                                        for i in blk.component_list))
 
         f = getattr(blk, "_"+cname+"_ext_func_param")
@@ -861,7 +884,7 @@ def rule_am_default(m, cname, a, p, pp=()):
     k = getattr(m.params, cname+"_kappa")
     return sum(sum(
         m.mole_frac_phase_comp[p, i]*m.mole_frac_phase_comp[p, j] *
-        sqrt(a[pp, i]*a[pp, j])*(1-k[i, j])
+        sqrt(a[pp, i]*a[pp, j])*(1-(kappa['A'][i, j] + kappa['B'][i,j]*m.temperature))
         for j in m.components_in_phase(p))
         for i in m.components_in_phase(p))
 
